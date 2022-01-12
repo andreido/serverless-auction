@@ -1,0 +1,22 @@
+{
+  "name": "auction",
+  "version": "1.0.0",
+  "description": "auction service",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "sls deploy --stage prod --verbose",
+    "dev": "sls offline start --stage dev"
+  },
+  "author": "Andrei Dobre",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1055.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^8.2.3",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-env": "^1.7.0"
+  }
+}
