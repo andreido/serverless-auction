@@ -3,19 +3,108 @@ app: auction
 service: auction
 frameworkVersion: '2 || 3'
 
+plugins:
+  # Local testing
+  - serverless-dynamodb-local # serverless-dynamodb-local must be loaded BEFORE serverless-offline
+  - serverless-offline
+  # Extensions
+  - serverless-iam-roles-per-function
+  - serverless-bundle # bundler based on the serverless-webpack plugin - requires zero configuration and fully compatible with ES6/ES7 features
+
+# custom section defines variables that are not part of the core serverless framework (add anything you want here, or use it to customize plugin options)
+custom:
+  AuctionsTable:
+    # "AuctionsTable" below refers to the logical ID of the resource in the Resources section
+    name: !Ref AuctionsTable # !Ref logicalName   - returns the physical ID of the resource or the value of the parameter
+    arn: !GetAtt AuctionsTable.Arn # !GetAtt logicalNameOfResource.attributeName    - returns the value of an attribute from a resource in the template
+    gsis:
+      StatusAndExpiresAt: StatusAndExpiresAt
+  # serverless-dynamodb-local CLI options
+  dynamodb:
+    stages:
+      - dev # will only use DynamoDB Local in the dev stage
+    start:
+      port: 5000 # default is 8000
+      migrate: true # run dynamodb migrations upon start
+      inMemory: true # uses the RAM on the local machine to store the DynamoDB table
+  # serverless-offline CLI options
+  serverless-offline:
+    httpPort: 4000 # default is 3000
+    stage: dev
+
 provider:
   name: aws
-  stage: ${opt:stage, 'dev'}
+  stage: ${opt:stage, 'dev'} # 'opt' = options (console), ${variableSource, defaultValue}
   region: us-west-2
-  runtime: nodejs12.x
-  memorySize: 256
+  runtime: nodejs14.x
+  memorySize: 256 # memory limit in MB alotted for each lambda function (default is 1024MB)
   lambdaHashingVersion: '20201221'
+  environment:
+    AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
+    STATUS_AND_EXPIRES_AT_GSI_NAME: ${self:custom.AuctionsTable.gsis.StatusAndExpiresAt}
+    DDB_LOCAL_PORT: ${self:custom.dynamodb.start.port}
+  iamRoleStatements:
+    - ${file(iam/AuctionsTableIAM.yml):AuctionsTableIAM} # syntax: ${file(./myFile.yml):someProperty}
 
+# event types:
+# - http -> API Gateway
+# - schedule -> EventBridge
 functions:
-  hello:
-    handler: handler.hello
+  createAuction: # auction-{stage}-createAuction
+    handler: src/handlers/createAuction.handler
     events:
       - http:
-          path: /
-          method: get
+          path: /auction
+          method: POST
           cors: true
+  getAuctions: # auction-{stage}-getAuctions
+    handler: src/handlers/getAuctions.handler
+    events:
+      - http:
+          path: /auctions
+          method: GET
+          cors: true
+  getAuction: # auction-{stage}-getAuction
+    handler: src/handlers/getAuction.handler
+    events:
+      - http:
+          path: /auction/{id}
+          method: GET
+          cors: true
+  deleteAuction: # auction-{stage}-deleteAuction
+    handler: src/handlers/deleteAuction.handler
+    events:
+      - http:
+          path: /auction/{id}
+          method: DELETE
+          cors: true
+  # updateAuction: # auction-{stage}-updateAuction
+  #   handler: src/handlers/updateAuction.handler
+  #   events:
+  #     - http:
+  #         path: /auction/{id}
+  #         method: PATCH
+  #         cors: true
+  placeBid: # auction-{stage}-placeBid
+    handler: src/handlers/placeBid.handler
+    events:
+      - http:
+          path: /auction/{id}/bid
+          method: PATCH
+          cors: true
+  processAuctions: # auction-{stage}-processAuctions
+    handler: src/handlers/processAuctions.handler
+    # events:
+    #   - schedule: rate(1 minute) # will run processAuctions once every 1 minute
+    # schedule = EventBridge: serverless pub/sub service
+    # - Makes it possible to connect different event sources with AWS services via event buses
+    #   - An event bus is a pipeline that receives events
+    #   - Solves the following problem: "I want an easy, centralized way to notify code that's
+    #     interested in specific types of events when those events occur without any direct
+    #     coupling between the code that publishes an event and the code that receives it."
+    # - Event publishers can be any application, SaaS providers or internal AWS services
+    # - Event subscribers can range from EC2 instances, to other event buses to Lambda functions
+
+resources:
+  Resources:
+    AuctionsTable: ${file(resources/AuctionsTable.yml):AuctionsTable}

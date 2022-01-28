@@ -1,0 +1,24 @@
+AuctionsTable: # Logical ID for this resource
+  Type: AWS::DynamoDB::Table
+  Properties:
+    TableName: AuctionsTable-${self:provider.stage}
+    BillingMode: PAY_PER_REQUEST # On-Demand Read/Write Capacity Mode
+    AttributeDefinitions: # Definitions for the REQUIRED attributes in the table that MUST then be used in the KeySchema(s)
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: status
+        AttributeType: S
+      - AttributeName: expiresAt
+        AttributeType: S
+    KeySchema: # Must provide a KeySchema for the base table
+      - AttributeName: id
+        KeyType: HASH # HASH = Partition Key
+    GlobalSecondaryIndexes:
+      - IndexName: StatusAndExpiresAt
+        KeySchema: # Unlike the base table, keys need not be unique in a GSI
+          - AttributeName: status
+            KeyType: HASH
+          - AttributeName: expiresAt
+            KeyType: RANGE # RANGE = Sort Key (allows for sorting and filtering)
+        Projection:
+          ProjectionType: ALL # Projects ALL the attributes it the base table onto this GSI
