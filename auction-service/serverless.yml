@@ -13,6 +13,8 @@ plugins:
 
 # custom section defines variables that are not part of the core serverless framework (add anything you want here, or use it to customize plugin options)
 custom:
+  Authorizer:
+    arn: arn:aws:lambda:${aws:region}:${aws:accountId}:function:auction-auth-${self:provider.stage}-authorizer
   AuctionsTable:
     # "AuctionsTable" below refers to the logical ID of the resource in the Resources section
     name: !Ref AuctionsTable # !Ref logicalName   - returns the physical ID of the resource or the value of the parameter
@@ -57,6 +59,7 @@ functions:
           path: /auction
           method: POST
           cors: true
+          authorizer: ${self:custom.Authorizer.arn}
   getAuctions: # auction-{stage}-getAuctions
     handler: src/handlers/getAuctions.handler
     events:
@@ -64,6 +67,7 @@ functions:
           path: /auctions
           method: GET
           cors: true
+          authorizer: ${self:custom.Authorizer.arn}
   getAuction: # auction-{stage}-getAuction
     handler: src/handlers/getAuction.handler
     events:
@@ -71,6 +75,7 @@ functions:
           path: /auction/{id}
           method: GET
           cors: true
+          authorizer: ${self:custom.Authorizer.arn}
   deleteAuction: # auction-{stage}-deleteAuction
     handler: src/handlers/deleteAuction.handler
     events:
@@ -78,6 +83,7 @@ functions:
           path: /auction/{id}
           method: DELETE
           cors: true
+          authorizer: ${self:custom.Authorizer.arn}
   # updateAuction: # auction-{stage}-updateAuction
   #   handler: src/handlers/updateAuction.handler
   #   events:
@@ -85,6 +91,7 @@ functions:
   #         path: /auction/{id}
   #         method: PATCH
   #         cors: true
+  #         authorizer: ${self:custom.Authorizer.arn}
   placeBid: # auction-{stage}-placeBid
     handler: src/handlers/placeBid.handler
     events:
@@ -92,6 +99,7 @@ functions:
           path: /auction/{id}/bid
           method: PATCH
           cors: true
+          authorizer: ${self:custom.Authorizer.arn}
   processAuctions: # auction-{stage}-processAuctions
     handler: src/handlers/processAuctions.handler
     # events:

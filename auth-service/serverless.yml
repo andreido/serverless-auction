@@ -8,16 +8,53 @@ plugins:
 
 provider:
   name: aws
-  stage: ${opt:stage, 'dev'}}
+  stage: ${opt:stage, 'dev'}
   region: us-west-2
   runtime: nodejs14.x
-  memorySize: 256
+  memorySize: 128
   lambdaHashingVersion: '20201221'
+  environment:
+    AUTH0_PUBLIC_KEY: ${file(secret.pem)}
 
 functions:
-  hello:
-    handler: handler.hello
+  authorizer: # lambda authorizer
+    handler: src/handlers/authorizer.handler
+  privateEndpoint: # purely used for testing authorization mechanism for private lambda functions
+    handler: src/handlers/private.handler
     events:
-      - httpApi:
-          path: /
-          method: get
+      - http:
+          path: /private
+          method: POST
+          authorizer: authorizer
+          cors: true
+  publicEndpoint: # purely used for testing publicly accessible lambda functions
+    handler: src/handlers/public.handler
+    events:
+      - http:
+          path: /public
+          method: POST
+          cors: true
+
+resources:
+  Resources:
+    # This response is needed for custom authorizer failures cors support ¯\_(ツ)_/¯
+    GatewayResponse:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: EXPIRED_TOKEN
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+        StatusCode: '401'
+    AuthFailureGatewayResponse:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: UNAUTHORIZED
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+        StatusCode: '401'

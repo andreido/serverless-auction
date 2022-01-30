@@ -1,0 +1,20 @@
+{
+  "name": "auction-auth",
+  "version": "1.0.0",
+  "description": "auction auth service",
+  "author": "Andrei Dobre",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andreido/auction.git"
+  },
+  "scripts": {
+    "deploy": "sls deploy --stage prod --verbose"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^8.5.1"
+  },
+  "devDependencies": {
+    "serverless-bundle": "^5.2.0"
+  }
+}

@@ -19,6 +19,7 @@ const dynamodb = new AWS.DynamoDB.DocumentClient(options);
 
 const createAuction = async (event, context) => {
   const { title } = event.body;
+  const { name, nickname, email } = event.requestContext.authorizer;
   const now = new Date();
   const expiry = new Date();
   expiry.setMinutes(now.getMinutes() + EXPIRY_DURATION);
@@ -32,7 +33,8 @@ const createAuction = async (event, context) => {
     expiresAt: expiry.toISOString(),
     highestBid: {
       amount: 0
-    }
+    },
+    seller: { name, nickname, email }
   };
 
   try {

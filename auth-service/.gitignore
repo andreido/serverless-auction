@@ -1,6 +1,11 @@
+secret.pem
+
 # package directories
 node_modules
 jspm_packages
 
+package-lock.json
+
 # Serverless directories
 .serverless
+.webpack
