@@ -1,11 +1,17 @@
 org: andreidobre
 app: auction
-service: auth-service
-frameworkVersion: '2 || 3'
+service: auction-auth
+frameworkVersion: '3'
+
+plugins:
+  - serverless-bundle
 
 provider:
   name: aws
-  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}}
+  region: us-west-2
+  runtime: nodejs14.x
+  memorySize: 256
   lambdaHashingVersion: '20201221'
 
 functions:
