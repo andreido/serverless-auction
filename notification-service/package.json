@@ -1,7 +1,7 @@
 {
-  "name": "auction-auth",
+  "name": "auction-notif",
   "version": "1.0.0",
-  "description": "auction auth service",
+  "description": "auction notification service",
   "author": "Andrei Dobre",
   "license": "MIT",
   "repository": {
@@ -12,7 +12,7 @@
     "deploy": "sls deploy --stage prod --verbose"
   },
   "dependencies": {
-    "jsonwebtoken": "^8.5.1"
+    "aws-sdk": "^2.1066.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

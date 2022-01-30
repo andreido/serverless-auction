@@ -1,0 +1,22 @@
+AuctionsBucket:
+  Type: AWS::S3::Bucket
+  Properties:
+    BucketName: auctions-bucket--${self:provider.stage}
+    LifecycleConfiguration:
+      Rules:
+        - Id: ExpireAuctionImages
+          Status: Disabled
+          ExpirationInDays: 1 # images will be deleted after 1 day
+
+AuctionsBucketPolicy:
+  Type: AWS::S3::BucketPolicy
+  Properties:
+    Bucket: !Ref AuctionsBucket
+    PolicyDocument:
+      Statement:
+        - Sid: PublicRead
+          Effect: Allow
+          Principal: '*' # All (*) Principals = all objects in the S3 bucket
+          Action:
+            - s3:GetObject
+          Resource: arn:aws:s3:::${self:custom.AuctionsBucket.name}/*

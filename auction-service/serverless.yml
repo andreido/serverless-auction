@@ -1,7 +1,7 @@
 org: andreidobre
 app: auction
 service: auction
-frameworkVersion: '2 || 3'
+frameworkVersion: '3'
 
 plugins:
   # Local testing
@@ -21,6 +21,10 @@ custom:
     arn: !GetAtt AuctionsTable.Arn # !GetAtt logicalNameOfResource.attributeName    - returns the value of an attribute from a resource in the template
     gsis:
       StatusAndExpiresAt: StatusAndExpiresAt
+  AuctionsBucket:
+    name: auctions-bucket--${self:provider.stage}
+    # name: !Ref AuctionsBucket
+    arn: !GetAtt AuctionsBucket.Arn
   # serverless-dynamodb-local CLI options
   dynamodb:
     stages:
@@ -40,13 +44,16 @@ provider:
   region: us-west-2
   runtime: nodejs14.x
   memorySize: 256 # memory limit in MB alotted for each lambda function (default is 1024MB)
-  lambdaHashingVersion: '20201221'
   environment:
     AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
     STATUS_AND_EXPIRES_AT_GSI_NAME: ${self:custom.AuctionsTable.gsis.StatusAndExpiresAt}
+    AUCTIONS_BUCKET_NAME: ${self:custom.AuctionsBucket.name}
     DDB_LOCAL_PORT: ${self:custom.dynamodb.start.port}
-  iamRoleStatements:
-    - ${file(iam/AuctionsTableIAM.yml):AuctionsTableIAM} # syntax: ${file(./myFile.yml):someProperty}
+  iam:
+    role:
+      statements:
+        - ${file(iam/AuctionsTableIAM.yml):AuctionsTableIAM} # syntax: ${file(./myFile.yml):someProperty}
+        - ${file(iam/AuctionsBucketIAM.yml):AuctionsBucketIAM}
 
 # event types:
 # - http -> API Gateway
@@ -112,7 +119,17 @@ functions:
     #     coupling between the code that publishes an event and the code that receives it."
     # - Event publishers can be any application, SaaS providers or internal AWS services
     # - Event subscribers can range from EC2 instances, to other event buses to Lambda functions
+  uploadAuctionImage:
+    handler: src/handlers/uploadAuctionImage.handler
+    events:
+      - http:
+          path: /auction/{id}/image
+          method: PATCH
+          cors: true
+          authorizer: ${self:custom.Authorizer.arn}
 
 resources:
   Resources:
     AuctionsTable: ${file(resources/AuctionsTable.yml):AuctionsTable}
+    AuctionsBucket: ${file(resources/AuctionsBucket.yml):AuctionsBucket}
+    AuctionsBucketPolicy: ${file(resources/AuctionsBucket.yml):AuctionsBucketPolicy}

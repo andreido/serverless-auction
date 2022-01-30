@@ -1,0 +1,22 @@
+org: andreidobre
+app: auction
+service: auction-notif
+frameworkVersion: '3'
+
+plugins:
+  - serverless-bundle
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: us-west-2
+  runtime: nodejs14.x
+  memorySize: 256
+
+functions:
+  hello:
+    handler: src/handlers/hello.handler
+    events:
+      - httpApi:
+          path: /
+          method: GET

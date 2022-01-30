@@ -9,7 +9,7 @@ const closeAuction = async (auctionId) => {
   const params = {
     TableName: process.env.AUCTIONS_TABLE_NAME,
     Key: { id: auctionId },
-    UpdateExpression: 'SET #status = :status,updatedAt = :now',
+    UpdateExpression: 'SET #status = :status, updatedAt = :now',
     ExpressionAttributeValues: {
       ':status': AUCTION_STATES.CLOSED,
       ':now': now.toISOString()
